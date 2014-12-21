@@ -80,8 +80,7 @@ json_new (int type, const char *string) {
 
 void
 json_destroy (json_value_t *value) {
-  int i = 0;
-  size_t size = 0;
+  json_value_t *next = NULL;
 
   if (NULL == value) {
     return;
@@ -96,9 +95,16 @@ json_destroy (json_value_t *value) {
     value->next->prev = NULL;
   }
 
-  size = value->size;
-  for (;i < size; ++i) {
-    json_destroy(value->values[i]);
+  next = value->values[0];
+  while (next) {
+    json_destroy(next);
+    next = next->next;
+  }
+
+  if (value->parent) {
+    if (value->parent->size > 0) {
+      value->parent->size--;
+    }
   }
 
   free(value);
@@ -356,6 +362,7 @@ return root;
 
 char *
 json_stringify (json_value_t *root) {
+  json_value_t *value = NULL;
   char string[BUFSIZ];
   int type = root->type;
   int i = 0;
@@ -379,8 +386,8 @@ json_stringify (json_value_t *root) {
       break;
   }
 
-  for (; i < root->size; ++i) {
-    json_value_t *value = root->values[i];
+  value = root->values[0];
+  while (value) {
     char out[BUFSIZ];
 
     memset(out, 0, sizeof(out));
@@ -434,6 +441,8 @@ json_stringify (json_value_t *root) {
     if (value->next) {
       strcat(string, ",");
     }
+
+    value = value->next;
   }
 
   if (JSON_ARRAY == type) {
@@ -461,10 +470,12 @@ json_get (json_value_t *root, const char *id) {
     return NULL;
   }
 
+  printf("search\n");
   for (; j < size; ++j) {
     key = paths[j++];
-    for (i = 0; i < root->size; ++i) {
-      value = root->values[i];
+    value = root->values[i];
+    while (value) {
+      printf("%s\n", value->id);
       // scalar
       if (1 == size) {
         if (NULL == value) {
@@ -473,6 +484,8 @@ json_get (json_value_t *root, const char *id) {
           return value;
         }
       }
+
+      value = value->next;
     }
   }
   return NULL;

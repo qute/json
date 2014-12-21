@@ -23,7 +23,7 @@ test: $(TESTS)
 
 .PHONY: $(TESTS)
 $(TESTS):
-	$(CC) $(CFLAGS) -I. $(DEPS) $(@) -o $(@:.c=)
+	$(CC) $(CFLAGS) -I. $(LIB) $(@) -o $(@:.c=)
 	./$(@:.c=)
 
 install: $(BIN)
