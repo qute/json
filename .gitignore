@@ -39,3 +39,4 @@ qjson
 test/array-nested
 test/large-structure
 test/trailing-comma
+test/invalid-array
