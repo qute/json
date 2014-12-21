@@ -1,5 +1,5 @@
 
-BIN ?= json
+BIN ?= qjson
 MAIN ?= main.c
 SRC ?= $(filter-out $(MAIN), $(wildcard *.c))
 DEPS ?= $(wildcard deps/*/*.c)
