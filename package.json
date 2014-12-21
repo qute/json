@@ -1,0 +1,16 @@
+{
+  "name": "qute-json",
+  "version": "0.0.1",
+  "repo": "qute/json",
+  "description": "JSON parser and serializer built on qute",
+  "keywords": ["qute", "json", "parser", "serialize"],
+  "src": ["json.h", "json.c"],
+  "dependencies": {
+    "qute/qute": "*",
+    "jwerle/fs.c": "*"
+  },
+  "development": {
+    "jwerle/libok": "*"
+  }
+}
+
