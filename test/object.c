@@ -20,6 +20,8 @@ main (void) {
   src = fs_read(file);
   assert(src);
 
+  printf("%s\n", src);
+
   obj = json_parse(file, src);
   assert(obj);
 

@@ -155,7 +155,11 @@ json_perror (json_value_t *value) {
       break;
   }
 
-  fprintf(stderr, "%s: %s\n", name, value->current->next->as.string);
+  fprintf(stderr, "%s: %s\n\tat %s:%d:%d",
+      name, value->current->next->as.string,
+      value->current->id,
+      value->current->token.lineno,
+      value->current->token.colno);
 }
 
 json_value_t *
@@ -201,6 +205,7 @@ parse:
         break;
 
       case QNODE_IDENTIFIER:
+        enter("identifer");
         value->truthy = 1;
 
         if (EQ("null", node->as.string)) {
@@ -218,6 +223,7 @@ parse:
         break;
 
       case QNODE_STRING:
+        enter("string");
         if (!scope->arraylike && NULL == key) {
           key = node->as.string;
           if (QNODE_OPERATOR != node->next->type ||
@@ -246,6 +252,7 @@ parse:
         break;
 
       case QNODE_NUMBER:
+        enter("number");
         value = json_new(JSON_NUMBER, node->as.string);
         value->as.string = node->as.string;
         value->as.number = node->as.number;
@@ -340,6 +347,7 @@ parse:
         goto parse;
 
       case QNODE_OPERATOR:
+        enter("operator");
         if (':' == node->as.string[0]) {
           if (!node->prev) {
             root->errno = EJSON_TOKEN;
