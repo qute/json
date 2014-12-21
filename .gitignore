@@ -37,3 +37,4 @@ test/array
 test/object-nested
 qjson
 test/array-nested
+test/large-structure
