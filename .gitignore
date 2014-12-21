@@ -35,3 +35,4 @@ test/set
 test/stringify
 test/array
 test/object-nested
+qjson
