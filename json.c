@@ -118,21 +118,18 @@ json_parse (const char *filename, const char *src) {
 
   // alloc
   if (NULL == q_node_alloc(block, block)) {
-    root->errno = EJSON_MEM;
     return NULL;
   }
 
   // init
   if ((rc = q_parser_init(&parser, filename, src)) > 0) {
     free(block);
-    root->errno = EJSON_PARSERMEM;
     return NULL;
   }
 
   // parse
   if ((rc = q_parse(&parser, block)) > 0) {
     free(block);
-    root->errno = EJSON_PARSE;
     return NULL;
   }
 
