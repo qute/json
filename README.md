@@ -100,6 +100,29 @@ enum {
 
 These values are et on the `.type` member property.
 
+#### create a value
+
+You can create a new JSON value with the `json_new` function. It accepts
+a type and source string.
+
+```c
+json_value_t *null = json_new(JSON_NULL, "null");
+json_value_t *one = json_new(JSON_NULL, "1");
+json_value_t *string = json_new(JSON_STRING, "\"kinkajou\"");
+```
+
+#### destroying a value
+
+You can destroy a created or parsed value with `json_destroy`. It
+accepts a single `json_value_t` and frees all memory associated with it.
+It will recursively destroy all child values found in the `.values[]`
+member array.
+
+```c
+json_destroy(root);
+root = NULL;
+```
+
 ### parsing
 
 ```c
@@ -157,6 +180,82 @@ printf("%s\n", json_stringify(value));
 ```c
 printf("%s\n", json_stringify(json_parse("number", "12345")); // "12345"
 printf("%s\n", json_stringify(json_parse("object", "{\"foo\": null}")); // {"foo":null}
+```
+
+### error handling
+
+```c
+void
+json_perror (json_value_t *value);
+```
+
+Error handling is done on a per `json_value_t` occurrence. Every
+`json_value_t` instance has a `.errno` member property. When an error
+occurs during parsing this property is set and the parser quits. The
+only case when this is not true is when the parse fails to allocate
+member to initialize. This ascertained when calling `json_parse` by
+comparing the return value to `NULL`. An enumerated list of possible
+errors are below:
+
+```c
+enum {
+  EJSON_OK = 0,
+  EJSON_MEM,
+  EJSON_PARSE,
+  EJSON_TOKEN,
+  EJSON_PARSERMEM,
+};
+```
+
+It is possible to print a predefined error message to `stderr` with the
+`json_perror` function. It accepts `json_value_t` and will inspects its
+`.errno` property and generated a printed error message.
+
+```c
+json_perror(value);
+```
+
+### set and get
+
+```c
+json_value_t *
+json_get (json_value_t *root, const char *id);
+```
+
+```c
+void
+json_set (json_value_t *root, const char *id, json_value_t *value);
+```
+
+Values can be retrieved and modified with the `json_set` and `json_get`
+functions.
+
+You can set a `json_value_t` by name or dot notation with `json_set`. It
+accept a root `json_value_t` value, an id, and a `json_value_t` to set.
+You can check if an error occurs by inspecting the root's `.errno`
+member property.
+
+**set:**
+
+```c
+json_value_t *value = json_new(JSON_NULL, "null");
+json_value_t *age = json_new(JSON_NUMBER, "24");
+
+json_set(root, "name", value);
+json_set(root, "age", age);
+```
+
+**get:**
+
+```c
+printf("%s\n", json_get(root, "name")); // null
+printf("%s\n", json_get(root, "age")); // 24
+```
+
+**Dot notation and bracket can also be used:**
+
+```c
+printf("%s\n", json_get(root, "profile.friends[1].name")); // "frank"
 ```
 
 ## license

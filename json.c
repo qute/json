@@ -69,12 +69,50 @@ push (json_value_t *scope, json_value_t *value) {
   scope->values[scope->size++] = value;
 }
 
+json_value_t *
+json_new (int type, const char *string) {
+  json_value_t *value = (json_value_t *) malloc(sizeof(json_value_t));
+  if (NULL == value) { return NULL; }
+  value->type = type;
+  value->as.string = string;
+  return value;
+}
+
+void
+json_destroy (json_value_t *value) {
+  int i = 0;
+  size_t size = 0;
+
+  if (NULL == value) {
+    return;
+  } else if (value->prev) {
+    if (value->next) {
+      value->next->prev = value->prev;
+      value->prev->next = value->next;
+    } else {
+      value->prev->next = NULL;
+    }
+  } else if (value->next){
+    value->next->prev = NULL;
+  }
+
+  size = value->size;
+  for (;i < size; ++i) {
+    json_destroy(value->values[i]);
+  }
+
+  free(value);
+  value = NULL;
+}
+
 void
 json_perror (json_value_t *value) {
   char *name = NULL;
   switch (value->errno) {
     case EJSON_OK:
-      return;
+      name = "Okay";
+      break;
+
     case EJSON_MEM:
       name = "Out of memory";
       break;
@@ -107,14 +145,6 @@ json_parse (const char *filename, const char *src) {
   int expecting = 0;
   int in_array = 0;
   int rc = 0;
-
-#define new(T, s) ({                                       \
-  json_value_t *value =                                    \
-    (json_value_t *) malloc(sizeof(json_value_t));         \
-  value->type = T;                                         \
-  value->as.string = s;                                    \
-  (value);                                                 \
-})
 
   // alloc
   if (NULL == q_node_alloc(block, block)) {
@@ -149,12 +179,12 @@ parse:
         value->truthy = 1;
 
         if (EQ("null", node->as.string)) {
-          value = new(JSON_NULL, "null");
+          value = json_new(JSON_NULL, "null");
           value->truthy = 0;
         } else if (EQ("true", node->as.string)) {
-          value = new(JSON_BOOLEAN, "true");
+          value = json_new(JSON_BOOLEAN, "true");
         } else if (EQ("false", node->as.string)) {
-          value = new(JSON_BOOLEAN, "false");
+          value = json_new(JSON_BOOLEAN, "false");
           value->truthy = 0;
         } else {
           root->errno = EJSON_TOKEN;
@@ -187,11 +217,11 @@ parse:
           goto error;
         }
 
-        value = new(JSON_STRING, node->as.string);
+        value = json_new(JSON_STRING, node->as.string);
         break;
 
       case QNODE_NUMBER:
-        value = new(JSON_NUMBER, node->as.string);
+        value = json_new(JSON_NUMBER, node->as.string);
         value->as.string = node->as.string;
         value->as.number = node->as.number;
 
@@ -213,7 +243,7 @@ parse:
       case QNODE_TOKEN:
         if ('{' == node->as.string[0]) {
           enter("object");
-          value = new(JSON_OBJECT, NULL);
+          value = json_new(JSON_OBJECT, NULL);
           value->arraylike = 0;
           value->as.string = "[Object]";
           if (NULL == root) {
@@ -224,7 +254,7 @@ parse:
           }
         } else if ('[' == node->as.string[0]) {
           enter("array");
-          value = new(JSON_ARRAY, NULL);
+          value = json_new(JSON_ARRAY, NULL);
           value->arraylike = 1;
           value->as.string = "[Array]";
           if (NULL == root) {
@@ -322,8 +352,6 @@ error:
 done:
 free(block);
 return root;
-
-#undef new
 }
 
 char *
@@ -450,7 +478,6 @@ json_get (json_value_t *root, const char *id) {
   return NULL;
 }
 
-json_value_t *
+void
 json_set (json_value_t *root, const char *id, json_value_t *value) {
-  return NULL;
 }

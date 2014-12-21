@@ -34,15 +34,17 @@ main (int argc, char **argv) {
 
   json_value_t *object = json_parse(filename, src);
 
+  if (NULL == object) {
+    return 1;
+  }
+
   if (object->errno) {
     json_perror(object);
     return 1;
   }
 
-  string = json_stringify(object);
-
-  printf("%s\n",
-      json_get(object, "food")->as.string);
+  json_destroy(object);
+  object = NULL;
 
   return 0;
 }

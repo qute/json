@@ -26,23 +26,22 @@ enum {
 #define JSON_MAX_VALUES 0xffff
 #define JSON_MAX_DEPTH 0xfff
 
-#define JSON_VALUE_FIELDS                        \
-  int type;                                      \
-  int truthy;                                    \
-  int errno;                                     \
-  int arraylike;                                 \
-  size_t size;                                   \
-  const char *id;                                \
-  q_node_t *current;                             \
-  struct json_value *next;                       \
-  struct json_value *prev;                       \
-  struct json_value *parent;                     \
-  struct json_value *values[JSON_MAX_VALUES];    \
-  struct {                                       \
-    const char *string;                          \
-    float number;                                \
-  } as;                                          \
-
+#define JSON_VALUE_FIELDS                                  \
+  int type;                                                \
+  int truthy;                                              \
+  int errno;                                               \
+  int arraylike;                                           \
+  size_t size;                                             \
+  const char *id;                                          \
+  q_node_t *current;                                       \
+  struct json_value *next;                                 \
+  struct json_value *prev;                                 \
+  struct json_value *parent;                               \
+  struct json_value *values[JSON_MAX_VALUES];              \
+  struct {                                                 \
+    const char *string;                                    \
+    float number;                                          \
+  } as;                                                    \
 
 typedef struct json_value {
   JSON_VALUE_FIELDS;
@@ -51,13 +50,19 @@ typedef struct json_value {
 json_value_t *
 json_parse (const char *, const char *);
 
+json_value_t *
+json_new (int, const char *);
+
+void
+json_destroy (json_value_t *);
+
 char *
 json_stringify (json_value_t *);
 
 json_value_t *
 json_get (json_value_t *, const char *);
 
-json_value_t *
+void
 json_set (json_value_t *, const char *, json_value_t *);
 
 void
