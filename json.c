@@ -61,9 +61,12 @@ strsplit (const char *str, char *parts[], const char *delimiter) {
 
 static void
 push (json_value_t *scope, json_value_t *value) {
+  value->index = 0;
+
   if (scope->size > 0) {
     value->prev = scope->values[scope->size -1];
     value->prev->next = value;
+    value->index = value->prev->index +1;
   }
 
   scope->values[scope->size++] = value;
@@ -80,7 +83,8 @@ json_new (int type, const char *string) {
 
 void
 json_destroy (json_value_t *value) {
-  json_value_t *next = NULL;
+  json_value_t *child = NULL;
+  json_value_t *tmp = NULL;
 
   if (NULL == value) {
     return;
@@ -95,10 +99,25 @@ json_destroy (json_value_t *value) {
     value->next->prev = NULL;
   }
 
-  next = value->values[0];
-  while (next) {
-    json_destroy(next);
-    next = next->next;
+  if (value->parent) {
+    value->parent->values[value->index] = NULL;
+  }
+
+  if (value->next && value->parent) {
+    tmp = value->next;
+    while (tmp) {
+      tmp->index--;
+      if (tmp->parent) {
+        tmp->parent->values[tmp->index] = tmp;
+      }
+      tmp = tmp->next;
+    }
+  }
+
+  child = value->values[0];
+  while (child) {
+    json_destroy(child);
+    child = child->next;
   }
 
   if (value->parent) {
@@ -460,10 +479,21 @@ json_value_t *
 json_get (json_value_t *root, const char *id) {
   json_value_t *value = root->values[0];
   while (value) {
-    // scalar
-    if (EQ(value->id, id)) {
-      return value;
+    char index[BUFSIZ];
+    if (JSON_OBJECT == root->type) {
+      if (EQ(value->id, id)) {
+        return value;
+      }
+    } else if (JSON_ARRAY == root->type) {
+      memset(index, 0, sizeof(index));
+      sprintf(index, "%d", value->index);
+      if (EQ(index, id)) {
+        return value;
+      }
+    } else {
+      return NULL;
     }
+
     value = value->next;
   }
   return NULL;

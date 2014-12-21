@@ -28,8 +28,9 @@ enum {
 
 #define JSON_VALUE_FIELDS                                  \
   int type;                                                \
-  int truthy;                                              \
   int errno;                                               \
+  int index;                                               \
+  int truthy;                                              \
   int arraylike;                                           \
   size_t size;                                             \
   const char *id;                                          \
