@@ -230,7 +230,7 @@ json_set (json_value_t *root, const char *id, json_value_t *value);
 Values can be retrieved and modified with the `json_set` and `json_get`
 functions.
 
-You can set a `json_value_t` by name or dot notation with `json_set`. It
+You can set a `json_value_t` by name or with `json_set`. It
 accept a root `json_value_t` value, an id, and a `json_value_t` to set.
 You can check if an error occurs by inspecting the root's `.errno`
 member property.
@@ -250,12 +250,6 @@ json_set(root, "age", age);
 ```c
 printf("%s\n", json_get(root, "name")); // null
 printf("%s\n", json_get(root, "age")); // 24
-```
-
-**Dot notation and bracket can also be used:**
-
-```c
-printf("%s\n", json_get(root, "profile.friends[1].name")); // "frank"
 ```
 
 ## license

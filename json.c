@@ -458,39 +458,26 @@ json_stringify (json_value_t *root) {
 
 json_value_t *
 json_get (json_value_t *root, const char *id) {
-  json_value_t *value = NULL;
-  char *paths[JSON_MAX_DEPTH];
-  char *key = NULL;
-  size_t size = 0;
-  int i = 0;
-  int j = 0;
-
-  size = strsplit(id, paths, ".");
-  if (0 == size) {
-    return NULL;
-  }
-
-  printf("search\n");
-  for (; j < size; ++j) {
-    key = paths[j++];
-    value = root->values[i];
-    while (value) {
-      printf("%s\n", value->id);
-      // scalar
-      if (1 == size) {
-        if (NULL == value) {
-          return NULL;
-        } else if (EQ(value->id, key)) {
-          return value;
-        }
-      }
-
-      value = value->next;
+  json_value_t *value = root->values[0];
+  while (value) {
+    // scalar
+    if (EQ(value->id, id)) {
+      return value;
     }
+    value = value->next;
   }
   return NULL;
 }
 
 void
 json_set (json_value_t *root, const char *id, json_value_t *value) {
+  json_value_t *existing = json_get(root, id);
+  if (NULL != existing) {
+    existing->as.string = value->as.string;
+    existing->as.number = value->as.number;
+    existing->type = value->type;
+  } else {
+    value->id = id;
+    push(root, value);
+  }
 }

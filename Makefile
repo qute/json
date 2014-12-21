@@ -23,8 +23,9 @@ test: $(TESTS)
 
 .PHONY: $(TESTS)
 $(TESTS):
-	$(CC) $(CFLAGS) -I. $(LIB) $(@) -o $(@:.c=)
-	./$(@:.c=)
+	@$(CC) $(CFLAGS) -I. $(LIB) $(@) -o $(@:.c=)
+	@echo ">$(@:.c=)"
+	@./$(@:.c=)
 
 install: $(BIN)
 	install $(BIN) $(PREFIX)/bin

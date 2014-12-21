@@ -12,7 +12,7 @@
 
 int
 main (void) {
-  const char *file = "test/fixtures/object.json";
+  const char *file = "test/fixtures/object-nested.json";
   const char *src = NULL;
   json_value_t *obj = NULL;
   json_value_t *value = NULL;
@@ -23,27 +23,22 @@ main (void) {
   obj = json_parse(file, src);
   assert(obj);
 
-  value = json_get(obj, "key");
+  value = json_get(obj, "a");
   assert(value);
-  assert(EQ("key", value->id));
-  assert(EQ("foo", value->as.string));
+  assert(JSON_OBJECT == value->type);
   ok("json_get");
 
-  json_destroy(value);
-  assert(1 == obj->size);
-  ok("json_destroy");
-
-  value = json_get(obj, "beep");
+  value = json_get(value, "b");
   assert(value);
-  assert(EQ("beep", value->id));
-  assert(EQ("boop", value->as.string));
+  assert(JSON_OBJECT == value->type);
   ok("json_get");
 
-  json_destroy(value);
-  assert(0 == obj->size);
-  ok("json_destroy");
+  value = json_get(value, "c");
+  assert(value);
+  assert(JSON_NUMBER == value->type);
+  assert(EQ("123", value->as.string));
+  assert(123 == (int) value->as.number);
 
-  ok("object");
   ok_done();
   return 0;
 }
