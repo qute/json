@@ -286,6 +286,8 @@ parse:
         } else if(',' == node->as.string[0]) {
           if (',' == node->next->as.string[0] ||
               ':' == node->next->as.string[0] ||
+              '}' == node->next->as.string[0] ||
+              ']' == node->next->as.string[0] ||
               ':' == node->prev->as.string[0]) {
             root->errno = EJSON_TOKEN;
             goto error;

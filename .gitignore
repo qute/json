@@ -38,3 +38,4 @@ test/object-nested
 qjson
 test/array-nested
 test/large-structure
+test/trailing-comma
