@@ -22,43 +22,6 @@
 #define enter(scope) DEBUG && printf("> enter: %s\n", scope);
 #define leave(scope) DEBUG && printf("< leave: %s\n", scope);
 
-static char *
-strflatten (char **strings, size_t size) {
-  int len = 0;
-  int i = 0;
-
-  if (0 == size) {
-    return NULL;
-  }
-
-  // compute total buffer length
-  for (; i < size; ++i) {
-    len += strlen(strings[i]);
-  }
-
-  return NULL;
-}
-
-static int
-strsplit (const char *str, char *parts[], const char *delimiter) {
-  char *pch;
-  int i = 0;
-  char *tmp = strdup(str);
-  pch = strtok(tmp, delimiter);
-
-  parts[i++] = strdup(pch);
-
-  while (pch) {
-    pch = strtok(NULL, delimiter);
-    if (NULL == pch) break;
-    parts[i++] = strdup(pch);
-  }
-
-  free(tmp);
-  free(pch);
-  return i;
-}
-
 static void
 push (json_value_t *scope, json_value_t *value) {
   value->index = 0;
