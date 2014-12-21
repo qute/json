@@ -1,5 +1,5 @@
 {
-  "name": "qute-json",
+  "name": "json",
   "version": "0.0.1",
   "repo": "qute/json",
   "description": "JSON parser and serializer built on qute",
