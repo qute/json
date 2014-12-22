@@ -19,8 +19,8 @@
 #define DEBUG 1
 #endif
 
-#define enter(scope) DEBUG && printf("> enter: %s\n", scope);
-#define leave(scope) DEBUG && printf("< leave: %s\n", scope);
+#define enter(scope) DEBUG && printf("+ enter: %s\n", scope);
+#define leave(scope) DEBUG && printf("- leave: %s\n", scope);
 
 static void
 push (json_value_t *scope, json_value_t *value) {
@@ -131,6 +131,7 @@ json_parse (const char *filename, const char *src) {
   json_value_t *scope = NULL;
   json_value_t *value = NULL;
   json_value_t *root = NULL;
+  json_value_t *tmp = NULL;
   q_parser_t parser;
   q_node_t *node = NULL;
   const char *key = NULL;
@@ -156,12 +157,20 @@ json_parse (const char *filename, const char *src) {
   }
 
 parse:
+  enter("parse");
   do {
+    enter("visit");
     node = next(block);
     if (NULL == node) { break; }
     if (root) {
       root->current = node;
+    } else {
+      // tmp root
+      tmp = json_new(JSON_OBJECT, "");
+      root = tmp;
+      value = root;
     }
+
     switch (node->type) {
       case QNODE_BLOCK:
       case QNODE_NULL:
@@ -169,13 +178,12 @@ parse:
 
       case QNODE_IDENTIFIER:
         enter("identifer");
-        value->truthy = 1;
-
         if (EQ("null", node->as.string)) {
           value = json_new(JSON_NULL, "null");
           value->truthy = 0;
         } else if (EQ("true", node->as.string)) {
           value = json_new(JSON_BOOLEAN, "true");
+          value->truthy = 1;
         } else if (EQ("false", node->as.string)) {
           value = json_new(JSON_BOOLEAN, "false");
           value->truthy = 0;
@@ -241,7 +249,7 @@ parse:
           value = json_new(JSON_OBJECT, NULL);
           value->arraylike = 0;
           value->as.string = "[Object]";
-          if (NULL == root) {
+          if (NULL == root || tmp == root) {
             root = value;
             scope = value;
             root->id = filename;
@@ -252,7 +260,7 @@ parse:
           value = json_new(JSON_ARRAY, NULL);
           value->arraylike = 1;
           value->as.string = "[Array]";
-          if (NULL == root) {
+          if (NULL == root || tmp == root) {
             root = value;
             scope = value;
             root->id = filename;
@@ -338,6 +346,7 @@ parse:
     push(scope, value);
     value->parent = scope;
     key = NULL;
+    value = NULL;
 
   } while (node);
 
@@ -348,6 +357,11 @@ error:
   // @TODO: handle error
 
 done:
+  if (root != tmp) {
+    if (tmp) {
+      json_destroy(tmp);
+    }
+  }
 free(block);
 return root;
 }
