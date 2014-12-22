@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include <fs/fs.h>
+#include <buffer/buffer.h>
 
 #include "json.h"
 
@@ -39,30 +40,41 @@ json_value_t *
 json_new (int type, const char *string) {
   json_value_t *value = (json_value_t *) malloc(sizeof(json_value_t));
   if (NULL == value) { return NULL; }
-  value->type = type;
   value->as.string = string;
+  value->current = NULL;
+  value->parent = NULL;
+  value->truthy = 0;
+  value->errno = 0;
+  value->index = 0;
+  value->size = 0;
+  value->type = type;
+  value->id = NULL;
   return value;
 }
 
 void
 json_destroy (json_value_t *value) {
+  json_value_t *parent = NULL;
   json_value_t *child = NULL;
   json_value_t *tmp = NULL;
+  size_t size = 0;
 
   if (NULL == value) {
     return;
-  } else if (value->prev) {
+  } else if (NULL != value->prev) {
     if (value->next) {
       value->next->prev = value->prev;
       value->prev->next = value->next;
     } else {
       value->prev->next = NULL;
     }
-  } else if (value->next){
-    value->next->prev = NULL;
+  } else if (NULL != value->next){
+    if (NULL != value->next->prev) {
+      value->next->prev = NULL;
+    }
   }
 
-  if (value->parent) {
+  if (NULL != value->parent) {
     value->parent->values[value->index] = NULL;
   }
 
@@ -88,9 +100,6 @@ json_destroy (json_value_t *value) {
       value->parent->size--;
     }
   }
-
-  free(value);
-  value = NULL;
 }
 
 void
@@ -103,7 +112,8 @@ json_perror (json_value_t *value) {
 
     case EJSON_MEM:
       name = "Out of memory";
-      break;
+      fprintf(stderr, "E: %s\n", name);
+      return;
 
     case EJSON_PARSE:
       name = "Parser error";
@@ -115,14 +125,18 @@ json_perror (json_value_t *value) {
 
     case EJSON_PARSERMEM:
       name = "Parser out of memory";
-      break;
+      fprintf(stderr, "E: %s\n", name);
+      return;
   }
 
-  fprintf(stderr, "%s: %s\n\tat %s:%d:%d",
-      name, value->current->next->as.string,
-      value->current->id,
-      value->current->token.lineno,
-      value->current->token.colno);
+  if (NULL != value) {
+    fprintf(stderr, "%s: %s\n\tat %s:%d:%d",
+        name,
+        value->current->next ? value->current->next->as.string : "",
+        value->current->id ? value->current->id : "",
+        value->current ? value->current->token.lineno : 0,
+        value->current ? value->current->token.colno : 0);
+  }
 }
 
 json_value_t *
@@ -171,10 +185,12 @@ parse:
       value = root;
     }
 
+    root->errno = EJSON_OK;
+
     switch (node->type) {
       case QNODE_BLOCK:
       case QNODE_NULL:
-        break;
+        goto parse;
 
       case QNODE_IDENTIFIER:
         enter("identifer");
@@ -369,11 +385,15 @@ return root;
 char *
 json_stringify (json_value_t *root) {
   json_value_t *value = NULL;
-  char string[BUFSIZ];
+  buffer_t *buf = NULL;
+  char *data = NULL;
   int type = root->type;
   int i = 0;
 
-  memset(string, 0, sizeof(string));
+  buf = buffer_new();
+  if (NULL == buf) {
+    return NULL;
+  }
 
   // scalar root types
   switch (type) {
@@ -384,11 +404,11 @@ json_stringify (json_value_t *root) {
       return (char *) root->as.string;
 
     case JSON_ARRAY:
-      strcat(string, "[");
+      buffer_append(buf, "[");
       break;
 
     case JSON_OBJECT:
-      strcat(string, "{");
+      buffer_append(buf, "{");
       break;
   }
 
@@ -443,23 +463,25 @@ json_stringify (json_value_t *root) {
         break;
     }
 
-    strcat(string, out);
+    buffer_append(buf, out);
     if (value->next) {
-      strcat(string, ",");
+      buffer_append(buf, ",");
     }
 
     value = value->next;
   }
 
   if (JSON_ARRAY == type) {
-    strcat(string, "]");
+    buffer_append(buf, "]");
   } else if (JSON_OBJECT == type) {
-    strcat(string, "}");
+    buffer_append(buf, "}");
   } else {
     return NULL;
   }
 
-  return strdup(string);
+  data = strdup(buf->data);
+  buffer_free(buf);
+  return data;
 }
 
 json_value_t *
