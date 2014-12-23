@@ -101,6 +101,8 @@ json_destroy (json_value_t *value) {
       value->parent->size--;
     }
   }
+
+  free(value);
 }
 
 void
