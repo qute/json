@@ -6,6 +6,7 @@
 #include <fs/fs.h>
 #include <qute/qute.h>
 #include <buffer/buffer.h>
+#include <strdup/strdup.h>
 
 #include "json.h"
 

@@ -8,7 +8,7 @@ TESTS ?= $(wildcard test/*.c)
 PREFIX ?= /usr/local
 
 LIB ?= libjson.a
-CFLAGS += -Ideps
+CFLAGS += -Ideps -std=c99
 
 $(BIN): $(LIB)
 	$(CC) $(CFLAGS) $(DEPS) $(SRC) $(MAIN) -o $(@)
@@ -23,7 +23,7 @@ test: $(TESTS)
 
 .PHONY: $(TESTS)
 $(TESTS):
-	@$(CC) $(CFLAGS) -I. $(LIB) $(@) -o $(@:.c=)
+	@$(CC) $(CFLAGS) -I. $(OBJS) $(@) -o $(@:.c=)
 	@echo ">$(@:.c=)"
 	@./$(@:.c=)
 
