@@ -7,6 +7,7 @@
   "src": ["json.h", "json.c"],
   "dependencies": {
     "qute/qute": "*",
+    "buffer": "0.2.1",
     "jwerle/fs.c": "*"
   },
   "development": {
