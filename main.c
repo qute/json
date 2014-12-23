@@ -1,10 +1,10 @@
 
-#include <qute.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#include <qute/qute.h>
 #include <fs/fs.h>
 #include <buffer/buffer.h>
 
