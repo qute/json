@@ -1,10 +1,10 @@
 
-#include <qute.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <fs/fs.h>
+#include <qute/qute.h>
 #include <buffer/buffer.h>
 
 #include "json.h"

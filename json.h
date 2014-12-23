@@ -2,7 +2,7 @@
 #ifndef Q_JSON_H
 #define Q_JSON_H
 
-#include <qute.h>
+#include <qute/qute.h>
 
 struct json_value;
 
