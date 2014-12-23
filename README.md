@@ -29,13 +29,13 @@ $ make install
 ## usage
 
 ```c
-include <json.h>
+#include <json.h>
 ```
 
 or
 
 ```c
-include <json/json.h>
+#include <json/json.h>
 ```
 
 ```c
