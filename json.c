@@ -15,7 +15,7 @@
 #define next(p) p->nodes[p->cursor++]
 
 #ifndef DEBUG
-#define DEBUG 1
+#define DEBUG 0
 #else
 #undef DEBUG
 #define DEBUG 1
@@ -195,14 +195,12 @@ parse:
 
     node->id = filename;
 
-    printf("%d %s\n", node->type, node->as.string);
     switch (node->type) {
       case QNODE_BLOCK:
       case QNODE_NULL:
         goto parse;
 
       case QNODE_HEX:
-        printf("\n\n\thex\n");
         root->errno = EJSON_TOKEN;
         goto error;
 
