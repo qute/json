@@ -12,7 +12,7 @@
 
 void
 test_file_fails(char * name) {
-  printf("test=(%s)\n", name);
+  // printf("test=(%s)\n", name);
   char *path = "test/fixtures/";
   char *src = NULL;
   char file[strlen(path) + strlen(name)];
