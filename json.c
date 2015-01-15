@@ -15,7 +15,7 @@
 #define next(p) p->nodes[p->cursor++]
 
 #ifndef DEBUG
-#define DEBUG 0
+#define DEBUG 1
 #else
 #undef DEBUG
 #define DEBUG 1
@@ -62,38 +62,34 @@ json_destroy (json_value_t *value) {
 
   if (NULL == value) {
     return;
-  } else if (NULL != value->prev) {
-    if (value->next) {
-      value->next->prev = value->prev;
-      value->prev->next = value->next;
-    } else {
-      value->prev->next = NULL;
-    }
-  } else if (NULL != value->next){
-    if (NULL != value->next->prev) {
-      value->next->prev = NULL;
-    }
   }
 
   if (NULL != value->parent) {
     value->parent->values[value->index] = NULL;
   }
 
-  if (value->next && value->parent) {
-    tmp = value->next;
-    while (tmp) {
-      tmp->index--;
-      if (tmp->parent) {
-        tmp->parent->values[tmp->index] = tmp;
-      }
-      tmp = tmp->next;
+  tmp = value->next;
+  while (tmp) {
+    tmp->index--;
+    if (tmp->parent) {
+      tmp->parent->values[tmp->index] = tmp;
     }
+    tmp = tmp->next;
+  }
+
+  if (value->next) {
+    value->next->prev = value->prev;
+  }
+
+  if (value->prev) {
+    value->prev->next = value->next;
   }
 
   child = value->values[0];
   while (child) {
+    tmp = child->next;
     json_destroy(child);
-    child = child->next;
+    child = tmp;
   }
 
   if (value->parent) {
@@ -133,9 +129,9 @@ json_perror (json_value_t *value) {
   }
 
   if (NULL != value) {
-    fprintf(stderr, "%s: %s\n\tat %s:%d:%d",
+    fprintf(stderr, "%s: %s\n    at (%s:%d:%d)\n",
         name,
-        value->current->next ? value->current->next->as.string : "",
+        value->current->next ? value->current->next->as.string : value->current->as.string,
         value->current->id ? value->current->id : "",
         value->current ? value->current->token.lineno : 0,
         value->current ? value->current->token.colno : 0);
@@ -145,12 +141,12 @@ json_perror (json_value_t *value) {
 json_value_t *
 json_parse (const char *filename, const char *src) {
   q_node_block_t *block = NULL;
+  q_parser_t parser;
+  q_node_t *node = NULL;
   json_value_t *scope = NULL;
   json_value_t *value = NULL;
   json_value_t *root = NULL;
   json_value_t *tmp = NULL;
-  q_parser_t parser;
-  q_node_t *node = NULL;
   const char *key = NULL;
   int expecting = 0;
   int in_array = 0;
@@ -173,27 +169,42 @@ json_parse (const char *filename, const char *src) {
     return NULL;
   }
 
+  block->cursor = 0;
+
 parse:
   enter("parse");
   do {
-    enter("visit");
-    node = next(block);
-    if (NULL == node) { break; }
-    if (root) {
-      root->current = node;
-    } else {
+    if (NULL == root) {
       // tmp root
       tmp = json_new(JSON_OBJECT, "");
       root = tmp;
       value = root;
     }
 
-    root->errno = EJSON_OK;
+    enter("next");
+    node = next(block);
 
+    root->current = node;
+    root->errno = EJSON_OK;
+    root->id = filename;
+
+    if (NULL == node) {
+      enter("break");
+      break;
+    }
+
+    node->id = filename;
+
+    printf("%d %s\n", node->type, node->as.string);
     switch (node->type) {
       case QNODE_BLOCK:
       case QNODE_NULL:
         goto parse;
+
+      case QNODE_HEX:
+        printf("\n\n\thex\n");
+        root->errno = EJSON_TOKEN;
+        goto error;
 
       case QNODE_IDENTIFIER:
         enter("identifer");
@@ -226,6 +237,11 @@ parse:
         }
 
         if (!node->prev) {
+          root->errno = EJSON_TOKEN;
+          goto error;
+        }
+
+        if (key && !node->next) {
           root->errno = EJSON_TOKEN;
           goto error;
         }
@@ -369,8 +385,7 @@ parse:
 
   } while (node);
 
-goto done;
-
+  goto done;
 
 error:
   // @TODO: handle error
@@ -381,8 +396,9 @@ done:
       json_destroy(tmp);
     }
   }
-free(block);
-return root;
+
+  free(block);
+  return root;
 }
 
 char *
@@ -420,6 +436,7 @@ json_stringify (json_value_t *root) {
     char out[BUFSIZ];
 
     memset(out, 0, sizeof(out));
+
 
     switch (value->type) {
       case JSON_NUMBER:
